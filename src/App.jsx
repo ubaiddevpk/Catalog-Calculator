@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 import ValuationTool from './pages/ValuationTool';
 import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -13,13 +14,19 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Navigate to="/valuation" replace />} />
-          
-          <Route element={<MainLayout />}>
+
+          <Route
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/valuation" element={<ValuationTool />} />
           </Route>
-          
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
