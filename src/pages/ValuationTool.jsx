@@ -41,13 +41,13 @@ const ValuationTool = () => {
       color: "from-red-500 to-red-600",
       iconColor: "text-red-500",
     },
-    apify: {
-      label: "Apify",
-      icon: Database,
-      placeholder: "Search using Apify scraper...",
-      color: "from-blue-500 to-indigo-600",
-      iconColor: "text-blue-500",
-    },
+    // apify: {
+    //   label: "Apify",
+    //   icon: Database,
+    //   placeholder: "Search using Apify scraper...",
+    //   color: "from-blue-500 to-indigo-600",
+    //   iconColor: "text-blue-500",
+    // },
   };
 
   const SelectedIcon = PLATFORM_CONFIG[platform].icon;

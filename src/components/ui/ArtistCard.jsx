@@ -151,44 +151,60 @@ const ArtistCard = ({
                 {/* Platform Buttons - Show all available platforms */}
                 {/* Platform Buttons - Show all available platforms with correct labels */}
 
-               {/* Platform Buttons - handle mislabeled URLs based on current platform */}
-<div className="flex flex-wrap gap-2">
-  {platform === 'youtube' || youtubeUrl ? (
-    <Button
-      variant="secondary"
-      size="sm"
-      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
-      icon={Youtube}
-      onClick={() => window.open(youtubeUrl || spotifyUrl || apifyUrl, '_blank')}
-    >
-      Open in YouTube
-    </Button>
-  ) : null}
+                {/* Platform Buttons - handle mislabeled URLs based on current platform */}
+                <div className="flex flex-wrap gap-2">
+                  {platform === "youtube" || youtubeUrl ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
+                      icon={Youtube}
+                      onClick={() =>
+                        window.open(
+                          youtubeUrl || spotifyUrl || apifyUrl,
+                          "_blank"
+                        )
+                      }
+                    >
+                      Open in YouTube
+                    </Button>
+                  ) : null}
 
-  {platform === 'spotify' || (spotifyUrl && platform !== 'youtube') ? (
-    <Button
-      variant="secondary"
-      size="sm"
-      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
-      icon={Music}
-      onClick={() => window.open(spotifyUrl || youtubeUrl || apifyUrl, '_blank')}
-    >
-      Open in Spotify
-    </Button>
-  ) : null}
+                  {platform === "spotify" ||
+                  (spotifyUrl && platform !== "youtube") ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
+                      icon={Music}
+                      onClick={() =>
+                        window.open(
+                          spotifyUrl || youtubeUrl || apifyUrl,
+                          "_blank"
+                        )
+                      }
+                    >
+                      Open in Spotify
+                    </Button>
+                  ) : null}
 
-  {platform === 'apify' || apifyUrl ? (
-    <Button
-      variant="secondary"
-      size="sm"
-      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
-      icon={Database}
-      onClick={() => window.open(apifyUrl || youtubeUrl || spotifyUrl, '_blank')}
-    >
-      Open in Apify
-    </Button>
-  ) : null}
-</div>
+                  {platform === "apify" || apifyUrl ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
+                      icon={Database}
+                      onClick={() =>
+                        window.open(
+                          apifyUrl || youtubeUrl || spotifyUrl,
+                          "_blank"
+                        )
+                      }
+                    >
+                      Open in Apify
+                    </Button>
+                  ) : null}
+                </div>
               </div>
 
               {genres?.length > 0 && (
