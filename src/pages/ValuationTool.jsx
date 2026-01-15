@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from "react";
 import { Search, Music, Youtube, Database, ChevronDown } from "lucide-react";
 import Card from "../components/common/Card";
@@ -41,13 +43,13 @@ const ValuationTool = () => {
       color: "from-red-500 to-red-600",
       iconColor: "text-red-500",
     },
-    // apify: {
-    //   label: "Apify",
-    //   icon: Database,
-    //   placeholder: "Search using Apify scraper...",
-    //   color: "from-blue-500 to-indigo-600",
-    //   iconColor: "text-blue-500",
-    // },
+    apify: {
+      label: "Apify",
+      icon: Database,
+      placeholder: "Search artist on Apify (with play counts)...",
+      color: "from-blue-500 to-indigo-600",
+      iconColor: "text-blue-500",
+    },
   };
 
   const SelectedIcon = PLATFORM_CONFIG[platform].icon;
@@ -161,7 +163,7 @@ const ValuationTool = () => {
           <div>
             <h2 className="text-xl sm:text-2xl font-bold">Search Artist</h2>
             <p className="text-white/90 text-xs sm:text-sm">
-              Search from Spotify, YouTube or Apify
+              Search from Spotify, YouTube or Apify (with stream counts)
             </p>
           </div>
         </div>
@@ -176,37 +178,54 @@ const ValuationTool = () => {
             >
               <div className="flex items-center gap-2">
                 <SelectedIcon size={20} />
-                <span className="font-medium">{PLATFORM_CONFIG[platform].label}</span>
+                <span className="font-medium">
+                  {PLATFORM_CONFIG[platform].label}
+                </span>
               </div>
-              <ChevronDown size={18} className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={18}
+                className={`transition-transform duration-200 ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
-                {Object.entries(PLATFORM_CONFIG).map(([key, config]) => {
-                  const Icon = config.icon;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        setPlatform(key);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`w-full px-4 py-3 flex items-center gap-3 transition-all duration-200 ${
-                        platform === key
-                          ? 'bg-gradient-to-r ' + config.color + ' text-white'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      <Icon size={20} />
-                      <span className="font-medium">{config.label}</span>
-                      {platform === key && (
-                        <span className="ml-auto text-xs">✓</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <>
+                {/* Backdrop to close dropdown */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsDropdownOpen(false)}
+                />
+                
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                  {Object.entries(PLATFORM_CONFIG).map(([key, config]) => {
+                    const Icon = config.icon;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setPlatform(key);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full px-4 py-3 flex items-center gap-3 transition-all duration-200 ${
+                          platform === key
+                            ? "bg-gradient-to-r " +
+                              config.color +
+                              " text-white"
+                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        <Icon size={20} />
+                        <span className="font-medium">{config.label}</span>
+                        {platform === key && (
+                          <span className="ml-auto text-xs">✓</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
 
@@ -251,6 +270,12 @@ const ValuationTool = () => {
                     Spotify/Apify.
                   </p>
                 )}
+                {platform === "apify" && (
+                  <p className="text-white/80 text-xs mt-1">
+                    Apify scraping might take longer. If it fails, try again or
+                    use Spotify.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -258,13 +283,50 @@ const ValuationTool = () => {
 
         {/* Loading Message for Apify */}
         {isLoading && platform === "apify" && (
-          <div className="mt-4 p-4 bg-blue-500/20 border border-blue-300/30 rounded-lg backdrop-blur-sm animate-pulse">
+          <div className="mt-4 p-4 bg-blue-500/20 border border-blue-300/30 rounded-lg backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <div className="animate-spin">⏳</div>
-              <p className="text-white text-sm font-medium">
-                Apify is scraping data... This may take 20-40 seconds. Please
-                wait!
-              </p>
+              <div className="animate-spin">
+                <Database size={20} className="text-white" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium">
+                  Apify is scraping Spotify data...
+                </p>
+                <p className="text-white/80 text-xs mt-1">
+                  This includes play counts, top cities, and detailed stats.
+                  May take 20-40 seconds.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Platform-specific info */}
+        {!isLoading && !error && (
+          <div className="mt-4 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
+            <div className="flex items-start gap-2 text-xs text-white/90">
+              <span>💡</span>
+              <div>
+                {platform === "spotify" && (
+                  <p>
+                    <strong>Spotify:</strong> Get official artist data, top
+                    tracks, albums, and related artists.
+                  </p>
+                )}
+                {platform === "youtube" && (
+                  <p>
+                    <strong>YouTube:</strong> Search for YouTube channels and
+                    get subscriber counts, video stats.
+                  </p>
+                )}
+                {platform === "apify" && (
+                  <p>
+                    <strong>Apify:</strong> Get detailed play counts, stream
+                    data, top cities, and comprehensive artist analytics via
+                    web scraping.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -317,6 +379,8 @@ const ValuationTool = () => {
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Real-time data from{" "}
                   {PLATFORM_CONFIG[selectedArtist.platform || platform].label}
+                  {selectedArtist.platform === "apify" &&
+                    " (including play counts)"}
                 </p>
               </div>
             </div>
@@ -343,6 +407,10 @@ const ValuationTool = () => {
             youtubeUrl={selectedArtist.youtubeUrl}
             apifyUrl={selectedArtist.apifyUrl}
             platform={selectedArtist.platform}
+            monthlyListeners={selectedArtist.monthlyListeners}
+            biography={selectedArtist.biography}
+            topCities={selectedArtist.topCities}
+            externalLinks={selectedArtist.externalLinks}
           />
         </div>
       )}
@@ -364,9 +432,13 @@ const ValuationTool = () => {
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
                 Select a platform and search for an artist to begin analysis
               </p>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
-                💡 Tip: Click on suggested artists for instant results
-              </p>
+              <div className="space-y-2 text-xs sm:text-sm text-gray-500 dark:text-gray-500">
+                <p>💡 Tip: Click on suggested artists for instant results</p>
+                <p>
+                  🔥 Try <strong>Apify</strong> for detailed stream counts and
+                  play data!
+                </p>
+              </div>
             </div>
           </div>
         </Card>
