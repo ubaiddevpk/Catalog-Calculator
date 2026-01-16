@@ -20,13 +20,37 @@ const ValuationTool = () => {
   const [error, setError] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const suggestedArtists = [
-    "Taylor Swift",
-    "Drake",
-    "The Weeknd",
-    "Bad Bunny",
-    "Ariana Grande",
-  ];
+const suggestedArtists = [
+  "Taylor Swift",
+  "Drake",
+  "The Weeknd",
+  "Bad Bunny",
+  "Ariana Grande",
+  "Billie Eilish",
+  "Bruno Mars",
+  "SZA",
+  "Kendrick Lamar",
+  "Sabrina Carpenter",
+  "Post Malone",
+  "Olivia Rodrigo",
+  "Morgan Wallen",
+  "Lady Gaga",
+  "Benson Boone",
+  "Zach Bryan",
+  "Gracie Abrams",
+  "Teddy Swims",
+  "Chappell Roan",
+  "Justin Timberlake",
+  "Carrie Underwood",
+  "Mariah Carey",
+  "Stevie Wonder",
+  "Dolly Parton",
+  "Bruce Springsteen",
+  "Madonna",
+  "JAY-Z",
+];
+
+
 
   const PLATFORM_CONFIG = {
     spotify: {
