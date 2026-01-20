@@ -5,6 +5,7 @@ import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
 import ValuationTool from './pages/ValuationTool';
+import ArtistValuationDetail from './pages/ArtistValuationDetail'; // ADDED: New import
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -25,6 +26,8 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/valuation" element={<ValuationTool />} />
+            {/* ADDED: New route for valuation detail page */}
+            <Route path="/valuation/detail" element={<ArtistValuationDetail />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

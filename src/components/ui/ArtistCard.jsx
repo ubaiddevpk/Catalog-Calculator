@@ -1,7 +1,5 @@
-
-
-
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import {
   Music,
   ExternalLink,
@@ -18,6 +16,7 @@ import {
   Globe,
   Play,
   Eye,
+  Rocket, // Added for Launch Valuation button
 } from "lucide-react";
 
 // Mock Card Component
@@ -65,6 +64,7 @@ const ArtistCard = ({
   topCities,
   externalLinks,
 }) => {
+  const navigate = useNavigate(); // Added for navigation
   const [activeTab, setActiveTab] = useState("tracks");
 
   // Platform configuration
@@ -100,6 +100,25 @@ const ArtistCard = ({
       x: Twitter,
     };
     return iconMap[label?.toLowerCase()] || Globe;
+  };
+
+  // ADDED: Handler for Launch Valuation button
+  const handleLaunchValuation = () => {
+    navigate('/valuation/detail', {
+      state: {
+        artist: {
+          name,
+          image,
+          followers,
+          popularity,
+          genres,
+          topTracks,
+          stats,
+          monthlyListeners,
+          platform,
+        }
+      }
+    });
   };
 
   return (
@@ -234,6 +253,17 @@ const ArtistCard = ({
                       View on Spotify
                     </Button>
                   )}
+                  
+                  {/* ADDED: Launch Valuation Button */}
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-lg border-0"
+                    icon={Rocket}
+                    onClick={handleLaunchValuation}
+                  >
+                    Launch Valuation
+                  </Button>
                 </div>
               </div>
 
