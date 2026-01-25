@@ -43,6 +43,16 @@ async function getAuthHeaders() {
 }
 
 // Spotify
+export async function searchSpotify(query) {
+  const headers = await getAuthHeaders()
+  const { data, error } = await supabase.functions.invoke('spotify', {
+    body: { query },
+    headers,
+  })
+  if (error) throw error
+  return data
+}
+
 // YouTube
 export async function searchYouTube(query) {
   const headers = await getAuthHeaders()
@@ -63,4 +73,35 @@ export async function searchApify(query) {
   })
   if (error) throw error
   return data
+}
+
+// Fetch album images from Spotify by searching for albums
+export async function getSpotifyAlbumImages(artistName, albumNames) {
+  try {
+    const headers = await getAuthHeaders()
+    
+    // Search for each album on Spotify
+    const albumsData = await Promise.all(
+      albumNames.map(async (albumName) => {
+        try {
+          const response = await searchSpotify(`${artistName} ${albumName}`)
+          if (response?.albums?.[0]?.image) {
+            return {
+              albumName,
+              image: response.albums[0].image,
+            }
+          }
+          return { albumName, image: null }
+        } catch (err) {
+          console.warn(`Failed to fetch image for album: ${albumName}`, err)
+          return { albumName, image: null }
+        }
+      })
+    )
+    
+    return albumsData
+  } catch (err) {
+    console.warn('Failed to fetch Spotify album images:', err)
+    return []
+  }
 }

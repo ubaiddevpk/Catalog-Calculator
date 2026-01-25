@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+
 import {
   Music,
   ExternalLink,
@@ -18,6 +20,7 @@ import {
   Eye,
   Rocket, // Added for Launch Valuation button
 } from "lucide-react";
+import { getSpotifyAlbumImages } from "../../utils/api";
 const BioText = ({ text }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -110,10 +113,9 @@ const ArtistCard = ({
 }) => {
   const navigate = useNavigate(); // Added for navigation
   const [activeTab, setActiveTab] = useState("tracks");
-
+  const [enhancedAlbums, setEnhancedAlbums] = useState(albums);
   // Platform configuration
   const platformData = {
-
     youtube: {
       url: youtubeUrl,
       icon: Youtube,
@@ -159,7 +161,38 @@ const ArtistCard = ({
       },
     });
   };
+useEffect(() => {
+  const enhanceAlbumsWithSpotifyImages = async () => {
+    if (!albums || albums.length === 0) return;
 
+    try {
+      const albumNames = albums.map((a) => a.name);
+      const spotifyImages = await getSpotifyAlbumImages(name, albumNames);
+      
+      console.log('Albums:', albums);
+      console.log('Spotify Images Response:', spotifyImages);
+
+      const merged = albums.map((album) => {
+        const spotifyData = spotifyImages.find(
+          (s) => s.albumName?.toLowerCase() === album.name?.toLowerCase(),
+        );
+        console.log(`Album: ${album.name}, Matched: ${spotifyData?.albumName}, Image: ${spotifyData?.image}`);
+        return {
+          ...album,
+          image: spotifyData?.image || album.image,
+        };
+      });
+
+      setEnhancedAlbums(merged);
+    } catch (err) {
+      console.error("Error enhancing albums:", err);
+      setEnhancedAlbums(albums);
+    }
+  };
+
+  enhanceAlbumsWithSpotifyImages();
+}, [albums, name]);
+  
   return (
     <div className="space-y-6">
       {/* Main Artist Info Card */}
@@ -253,46 +286,45 @@ const ArtistCard = ({
                   </div>
                 </div>
 
-          {/* Platform Buttons */}
-<div className="flex flex-wrap gap-2">
-  {/* YouTube Button */}
-  {platform?.toLowerCase() === "youtube" && youtubeUrl ? (
-    <Button
-      variant="secondary"
-      size="sm"
-      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
-      icon={Youtube}
-      onClick={() => window.open(youtubeUrl, "_blank")}
-    >
-      Open in YouTube
-    </Button>
-  ) : null}
+                {/* Platform Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  {/* YouTube Button */}
+                  {platform?.toLowerCase() === "youtube" && youtubeUrl ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
+                      icon={Youtube}
+                      onClick={() => window.open(youtubeUrl, "_blank")}
+                    >
+                      Open in YouTube
+                    </Button>
+                  ) : null}
 
-  {/* Spotify Button */}
-  {platform?.toLowerCase() === "apify" && spotifyUrl ? (
-    <Button
-      variant="secondary"
-      size="sm"
-      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
-      icon={Music}
-      onClick={() => window.open(spotifyUrl, "_blank")}
-    >
-      Open in Spotify
-    </Button>
-  ) : null}
+                  {/* Spotify Button */}
+                  {platform?.toLowerCase() === "apify" && spotifyUrl ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
+                      icon={Music}
+                      onClick={() => window.open(spotifyUrl, "_blank")}
+                    >
+                      Open in Spotify
+                    </Button>
+                  ) : null}
 
-  {/* Launch Valuation Button */}
-  <Button
-    variant="primary"
-    size="sm"
-    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-lg border-0"
-    icon={Rocket}
-    onClick={handleLaunchValuation}
-  >
-    Launch Valuation
-  </Button>
-</div>
-
+                  {/* Launch Valuation Button */}
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-lg border-0"
+                    icon={Rocket}
+                    onClick={handleLaunchValuation}
+                  >
+                    Launch Valuation
+                  </Button>
+                </div>
               </div>
 
               {/* Genres */}
@@ -550,7 +582,7 @@ const ArtistCard = ({
                           className="flex-shrink-0 bg-blue-500 text-white"
                           size="sm"
                         >
-                        <Eye size={12} className="mr-1 opacity-90" />
+                          <Eye size={12} className="mr-1 opacity-90" />
                           {track.streamCountFormatted}
                         </Badge>
                       ) : (
@@ -684,9 +716,11 @@ const ArtistCard = ({
           )}
 
           {/* Albums Tab */}
-          {activeTab === "albums" && albums?.length > 0 && (
+
+          {/* Albums Tab */}
+          {activeTab === "albums" && enhancedAlbums?.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-              {albums.map((album, i) => (
+              {enhancedAlbums.map((album, i) => (
                 <div
                   key={album.id || i}
                   className="group bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
@@ -696,15 +730,25 @@ const ArtistCard = ({
                       src={album.image}
                       alt={album.name}
                       className="w-full aspect-square rounded-lg object-cover shadow-md mb-3"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextElementSibling?.style.setProperty(
+                          "display",
+                          "flex",
+                        );
+                      }}
                     />
-                  ) : (
-                    <div className="w-full aspect-square rounded-lg bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center mb-3">
-                      <Album
-                        size={40}
-                        className="text-gray-500 dark:text-gray-600"
-                      />
-                    </div>
-                  )}
+                  ) : null}
+
+                  <div
+                    className="w-full aspect-square rounded-lg bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center mb-3"
+                    style={{ display: album.image ? "none" : "flex" }}
+                  >
+                    <Album
+                      size={40}
+                      className="text-gray-500 dark:text-gray-600"
+                    />
+                  </div>
 
                   <div>
                     <h4 className="font-semibold text-xs sm:text-sm text-gray-900 dark:text-white mb-1 line-clamp-2">
