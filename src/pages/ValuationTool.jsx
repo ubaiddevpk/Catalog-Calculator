@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Search, Youtube, Database, ChevronDown } from "lucide-react";
+import { Search, Youtube, Database, ChevronDown, X } from "lucide-react";
 import Card from "../components/common/Card";
 import Button from "../components/common/Button";
 import ArtistCard from "../components/ui/ArtistCard";
 import Badge from "../components/common/Badge";
 import SkeletonLoader from "../components/ui/SkeletonLoader";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { searchYouTube, searchApify } from "../utils/api";
+import { searchYouTube, searchApify, getArtistSuggestions } from "../utils/api";
 
 const ValuationTool = () => {
   usePageTitle("Valuation Tool", "Analyze artist metrics with real-time data");
@@ -17,6 +17,9 @@ const ValuationTool = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [showSuggestionsDropdown, setShowSuggestionsDropdown] = useState(false);
 
   const suggestedArtists = [
     "Taylor Swift",
@@ -52,6 +55,65 @@ const ValuationTool = () => {
     }
   }, [platform]);
 
+  // Fetch suggestions as user types
+// Update the useEffect for suggestions
+useEffect(() => {
+  const fetchSuggestions = async () => {
+    if (!searchQuery.trim()) {
+      setSuggestions([]);
+      setShowSuggestionsDropdown(false);
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+    setShowSuggestionsDropdown(true);
+
+    try {
+      let results = [];
+
+      // First, try to get results from the suggested artists
+      results = suggestedArtists.filter((artist) =>
+        artist.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      // If search query is more than 2 characters and no static results, fetch from API
+      if (searchQuery.length > 2) {
+        try {
+          const apiResults = await getArtistSuggestions(searchQuery, platform);
+          
+          // Combine results, but avoid duplicates
+          const combinedResults = [
+            ...results,
+            ...apiResults.map(r => r.name)
+          ];
+          
+          // Remove duplicates
+          results = [...new Set(combinedResults)];
+        } catch (apiErr) {
+          console.warn('API suggestion fetch failed, using local suggestions only', apiErr);
+          // Keep the local results if API fails
+        }
+      }
+
+      // If still no results, show the query itself as an option
+      if (results.length === 0 && searchQuery.length > 1) {
+        results = [searchQuery];
+      }
+
+      setSuggestions(results);
+    } catch (err) {
+      console.error("Error fetching suggestions:", err);
+      setSuggestions([]);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  // Debounce the suggestions fetch
+  const timer = setTimeout(fetchSuggestions, 500); // Increased debounce to 500ms for API calls
+  return () => clearTimeout(timer);
+}, [searchQuery, platform]);
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setError("Please enter a search query");
@@ -61,12 +123,13 @@ const ValuationTool = () => {
     setIsLoading(true);
     setError(null);
     setSelectedArtist(null);
+    setShowSuggestionsDropdown(false);
 
     try {
       let result;
 
       switch (platform) {
-        case "spotify": // renamed Apify
+        case "spotify":
           result = await searchApify(searchQuery);
           break;
 
@@ -77,7 +140,7 @@ const ValuationTool = () => {
         default:
           throw new Error("Invalid platform selected");
       }
-      // Validate result
+
       if (!result || !result.name) {
         throw new Error("Invalid response from API");
       }
@@ -96,8 +159,9 @@ const ValuationTool = () => {
     }
   };
 
-  const handleSuggestedArtistClick = async (artist) => {
+  const handleSuggestionClick = async (artist) => {
     setSearchQuery(artist);
+    setShowSuggestionsDropdown(false);
     setError(null);
     setIsLoading(true);
     setSelectedArtist(null);
@@ -125,14 +189,19 @@ const ValuationTool = () => {
       console.error("API error:", err);
       setError(
         err.message ||
-          `Failed to fetch data from ${PLATFORM_CONFIG[platform].label}`,
+          `Failed to fetch data from ${PLATFORM_CONFIG[platform].label}`
       );
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSuggestedArtistClick = (artist) => {
+    handleSuggestionClick(artist);
+  };
+
   const activePlatform = platform;
+
   return (
     <div className="space-y-6 px-4 sm:px-0">
       {/* Search Section */}
@@ -146,8 +215,7 @@ const ValuationTool = () => {
           <div>
             <h2 className="text-xl sm:text-2xl font-bold">Search Artist</h2>
             <p className="text-white/90 text-xs sm:text-sm">
-             Search from Spotify (with stream counts) or YouTube
-
+              Search from Spotify (with stream counts) or YouTube
             </p>
           </div>
         </div>
@@ -176,7 +244,6 @@ const ValuationTool = () => {
 
             {isDropdownOpen && (
               <>
-                {/* Backdrop to close dropdown */}
                 <div
                   className="fixed inset-0 z-40"
                   onClick={() => setIsDropdownOpen(false)}
@@ -211,6 +278,7 @@ const ValuationTool = () => {
             )}
           </div>
 
+          {/* Search Input with Autocomplete */}
           <div className="flex-1 relative">
             <input
               type="text"
@@ -219,13 +287,62 @@ const ValuationTool = () => {
               onKeyPress={(e) =>
                 e.key === "Enter" && !isLoading && handleSearch()
               }
+              onFocus={() => {
+                if (searchQuery.trim() && suggestions.length > 0) {
+                  setShowSuggestionsDropdown(true);
+                }
+              }}
               placeholder={PLATFORM_CONFIG[platform].placeholder}
               disabled={isLoading}
-              className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full pl-12 pr-10 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              autoComplete="off"
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2">
               <SelectedIcon size={20} className="text-white/70" />
             </div>
+
+            {/* Clear button */}
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSuggestions([]);
+                  setShowSuggestionsDropdown(false);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            )}
+
+            {/* Suggestions Dropdown */}
+            {showSuggestionsDropdown && suggestions.length > 0 && (
+              <>
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setShowSuggestionsDropdown(false)}
+                />
+
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-40 max-h-64 overflow-y-auto">
+                  {isLoadingSuggestions ? (
+                    <div className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">
+                      <p className="text-sm">Loading suggestions...</p>
+                    </div>
+                  ) : (
+                    suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all duration-150 flex items-center gap-3 border-b border-gray-100 dark:border-slate-700 last:border-b-0"
+                      >
+                        <Search size={16} className="text-gray-400" />
+                        <span className="font-medium">{suggestion}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <Button
@@ -274,8 +391,8 @@ const ValuationTool = () => {
               <div>
                 {platform === "spotify" && (
                   <p>
-                   <strong>Spotify:</strong> Official Spotify artist metrics and analytics.
-
+                    <strong>Spotify:</strong> Official Spotify artist metrics
+                    and analytics.
                   </p>
                 )}
                 {platform === "youtube" && (
@@ -355,7 +472,6 @@ const ValuationTool = () => {
             stats={selectedArtist.stats}
             spotifyUrl={selectedArtist.spotifyUrl}
             youtubeUrl={selectedArtist.youtubeUrl}
-            // apifyUrl={selectedArtist.apifyUrl}
             platform={selectedArtist.platform}
             monthlyListeners={selectedArtist.monthlyListeners}
             biography={selectedArtist.biography}
@@ -385,7 +501,7 @@ const ValuationTool = () => {
               <div className="space-y-2 text-xs sm:text-sm text-gray-500 dark:text-gray-500">
                 <p>💡 Tip: Click on suggested artists for instant results</p>
                 <p>
-                  🔥 Try <strong>Apify</strong> for detailed stream counts and
+                  🔥 Try <strong>Spotify</strong> for detailed stream counts and
                   play data!
                 </p>
               </div>
