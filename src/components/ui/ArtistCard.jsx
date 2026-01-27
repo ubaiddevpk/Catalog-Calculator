@@ -1,7 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-
 import {
   Music,
   ExternalLink,
@@ -17,48 +15,48 @@ import {
   Twitter,
   Globe,
   Play,
-  Eye,
-  Rocket, // Added for Launch Valuation button
+  Rocket,
+  Disc3,
+  ChevronRight,
 } from "lucide-react";
 import { getSpotifyAlbumImages } from "../../utils/api";
+
 const BioText = ({ text }) => {
   const [expanded, setExpanded] = useState(false);
 
-  // Clean the text: remove HTML tags and extra spaces
   const cleanText = text
-    .replace(/<\/?[^>]+(>|$)/g, "") // Remove HTML tags
+    .replace(/<\/?[^>]+(>|$)/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
   return (
-    <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+    <div className="text-slate-700 dark:text-slate-300 leading-relaxed">
       <p
-        className={`transition-all duration-300 overflow-hidden ${
+        className={`transition-all duration-300 ${
           expanded ? "line-clamp-none" : "line-clamp-5"
         }`}
       >
         {cleanText}
       </p>
       <button
-        className="mt-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+        className="mt-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center gap-1 group"
         onClick={() => setExpanded(!expanded)}
       >
-        {expanded ? "Show less" : "See more..."}
+        {expanded ? "Show less" : "Read more"}
+        <ChevronRight size={14} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </button>
     </div>
   );
 };
 
-// Mock Card Component
 const Card = ({ children, className = "" }) => (
   <div
-    className={`bg-white dark:bg-slate-900 rounded-xl shadow-lg ${className}`}
+    className={`bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 ${className}`}
   >
     {children}
   </div>
 );
 
-// Mock Button Component
 const Button = ({
   children,
   className = "",
@@ -67,30 +65,46 @@ const Button = ({
   variant = "primary",
   size = "md",
   disabled,
-}) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${className}`}
-  >
-    {Icon && <Icon size={18} />}
-    {children}
-  </button>
-);
+}) => {
+  const baseStyles = "inline-flex items-center gap-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl";
+  const sizeStyles = {
+    sm: "px-4 py-2 text-sm",
+    md: "px-5 py-2.5 text-base",
+    lg: "px-6 py-3 text-lg",
+  };
 
-// Mock Badge Component
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseStyles} ${sizeStyles[size]} ${className} disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95`}
+    >
+      {Icon && <Icon size={18} />}
+      {children}
+    </button>
+  );
+};
+
 const Badge = ({
   children,
   className = "",
   size = "md",
   variant = "default",
-}) => (
-  <span
-    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${className}`}
-  >
-    {children}
-  </span>
-);
+}) => {
+  const sizeStyles = {
+    sm: "px-2.5 py-1 text-xs",
+    md: "px-3 py-1.5 text-sm",
+    lg: "px-4 py-2 text-base",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full font-semibold shadow-sm ${sizeStyles[size]} ${className}`}
+    >
+      {children}
+    </span>
+  );
+};
 
 const ArtistCard = ({
   name,
@@ -111,28 +125,27 @@ const ArtistCard = ({
   topCities,
   externalLinks,
 }) => {
-  const navigate = useNavigate(); // Added for navigation
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("tracks");
   const [enhancedAlbums, setEnhancedAlbums] = useState(albums);
-  // Platform configuration
+
   const platformData = {
     youtube: {
       url: youtubeUrl,
       icon: Youtube,
       label: "YouTube",
-      color: "from-red-500 to-red-600",
+      color: "from-red-500 via-rose-500 to-pink-600",
     },
     apify: {
       url: apifyUrl || spotifyUrl,
       icon: Database,
-      label: "Apify",
-      color: "from-blue-500 to-indigo-600",
+      label: "Spotify",
+      color: "from-emerald-500 via-green-500 to-teal-600",
     },
   };
 
-  const currentPlatform = platformData[platform] || platformData.spotify;
+  const currentPlatform = platformData[platform] || platformData.apify;
 
-  // Helper to get social icon
   const getSocialIcon = (label) => {
     const iconMap = {
       facebook: Facebook,
@@ -143,7 +156,6 @@ const ArtistCard = ({
     return iconMap[label?.toLowerCase()] || Globe;
   };
 
-  // ADDED: Handler for Launch Valuation button
   const handleLaunchValuation = () => {
     navigate("/valuation/detail", {
       state: {
@@ -161,164 +173,147 @@ const ArtistCard = ({
       },
     });
   };
-useEffect(() => {
-  const enhanceAlbumsWithSpotifyImages = async () => {
-    if (!albums || albums.length === 0) return;
 
-    try {
-      const albumNames = albums.map((a) => a.name);
-      const spotifyImages = await getSpotifyAlbumImages(name, albumNames);
-      
-      console.log('Albums:', albums);
-      console.log('Spotify Images Response:', spotifyImages);
+  useEffect(() => {
+    const enhanceAlbumsWithSpotifyImages = async () => {
+      if (!albums || albums.length === 0) return;
 
-      const merged = albums.map((album) => {
-        const spotifyData = spotifyImages.find(
-          (s) => s.albumName?.toLowerCase() === album.name?.toLowerCase(),
-        );
-        console.log(`Album: ${album.name}, Matched: ${spotifyData?.albumName}, Image: ${spotifyData?.image}`);
-        return {
-          ...album,
-          image: spotifyData?.image || album.image,
-        };
-      });
+      try {
+        const albumNames = albums.map((a) => a.name);
+        const spotifyImages = await getSpotifyAlbumImages(name, albumNames);
 
-      setEnhancedAlbums(merged);
-    } catch (err) {
-      console.error("Error enhancing albums:", err);
-      setEnhancedAlbums(albums);
-    }
-  };
+        const merged = albums.map((album) => {
+          const spotifyData = spotifyImages.find(
+            (s) => s.albumName?.toLowerCase() === album.name?.toLowerCase()
+          );
+          return {
+            ...album,
+            image: spotifyData?.image || album.image,
+          };
+        });
 
-  enhanceAlbumsWithSpotifyImages();
-}, [albums, name]);
-  
+        setEnhancedAlbums(merged);
+      } catch (err) {
+        console.error("Error enhancing albums:", err);
+        setEnhancedAlbums(albums);
+      }
+    };
+
+    enhanceAlbumsWithSpotifyImages();
+  }, [albums, name]);
+
   return (
     <div className="space-y-6">
       {/* Main Artist Info Card */}
-      <Card className="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 text-white overflow-hidden relative">
+      <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-white overflow-hidden relative">
+        {/* Animated Background */}
         <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20px 20px, white 2px, transparent 0)",
-              backgroundSize: "40px 40px",
-            }}
-          ></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-500/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
 
-        <div className="relative z-10 p-4 sm:p-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
+        <div className="relative z-10 p-6 sm:p-8 lg:p-10">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8">
             {/* Artist Image */}
             <div className="flex-shrink-0 mx-auto lg:mx-0">
               {image ? (
                 <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
                   <img
                     src={image}
                     alt={name}
-                    className="w-32 h-32 sm:w-48 sm:h-48 rounded-2xl object-cover shadow-2xl ring-4 ring-white/20"
+                    className="relative w-40 h-40 sm:w-52 sm:h-52 lg:w-64 lg:h-64 rounded-3xl object-cover shadow-2xl ring-4 ring-white/30 group-hover:ring-white/50 transition-all"
                     onError={(e) => {
-                      e.currentTarget.src =
-                        "https://via.placeholder.com/192?text=No+Image";
+                      e.currentTarget.src = "https://via.placeholder.com/256?text=No+Image";
                     }}
                   />
-                  <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Music size={48} className="text-white" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-6">
+                    <Music size={48} className="text-white drop-shadow-lg" />
                   </div>
                 </div>
               ) : (
-                <div className="w-32 h-32 sm:w-48 sm:h-48 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <Music size={48} className="text-white/50" />
+                <div className="w-40 h-40 sm:w-52 sm:h-52 lg:w-64 lg:h-64 rounded-3xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center backdrop-blur-sm ring-4 ring-white/20">
+                  <Music size={64} className="text-white/50" />
                 </div>
               )}
             </div>
 
             {/* Artist Details */}
-            <div className="flex-1 space-y-4 w-full">
+            <div className="flex-1 space-y-5 w-full">
               <div className="flex flex-col gap-4">
                 <div>
-                  <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                  <div className="flex items-center gap-3 mb-3 flex-wrap">
                     <Badge
                       variant="success"
-                      className="bg-green-500 text-white"
+                      className="bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg"
                     >
                       <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                        <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-lg shadow-white/50"></span>
                         Live Data
                       </span>
                     </Badge>
-                    <span className="text-white/70 text-xs sm:text-sm">
+                    <span className="text-white/80 text-sm font-medium flex items-center gap-2">
+                      <Disc3 size={16} className="animate-spin" style={{ animationDuration: '3s' }} />
                       Real-time {currentPlatform.label} Stats
                     </span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text">
                     {name}
                   </h2>
-                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-white/90 text-sm sm:text-base">
-                    <div className="flex items-center gap-2">
-                      <Users size={18} />
-                      <span className="font-semibold">{followers}</span>
-                      <span className="text-white/70 hidden sm:inline">
-                        Followers
-                      </span>
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-white/90 text-base sm:text-lg">
+                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
+                      <Users size={20} />
+                      <span className="font-bold">{followers}</span>
+                      <span className="text-white/70 hidden sm:inline text-sm">Followers</span>
                     </div>
                     {monthlyListeners && platform === "apify" && (
-                      <div className="flex items-center gap-2">
-                        <Play size={18} />
-                        <span className="font-semibold">
-                          {monthlyListeners}
-                        </span>
-                        <span className="text-white/70 hidden sm:inline">
-                          Monthly Listeners
-                        </span>
+                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
+                        <Play size={20} />
+                        <span className="font-bold">{monthlyListeners}</span>
+                        <span className="text-white/70 hidden sm:inline text-sm">Monthly Listeners</span>
                       </div>
                     )}
                     {popularity && platform !== "apify" && (
-                      <div className="flex items-center gap-2">
-                        <TrendingUp size={18} />
-                        <span className="font-semibold">{popularity}</span>
-                        <span className="text-white/70 hidden sm:inline">
-                          Popularity
-                        </span>
+                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
+                        <TrendingUp size={20} />
+                        <span className="font-bold">{popularity}</span>
+                        <span className="text-white/70 hidden sm:inline text-sm">Popularity</span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Platform Buttons */}
-                <div className="flex flex-wrap gap-2">
-                  {/* YouTube Button */}
-                  {platform?.toLowerCase() === "youtube" && youtubeUrl ? (
+                <div className="flex flex-wrap gap-3">
+                  {platform?.toLowerCase() === "youtube" && youtubeUrl && (
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
+                      className="bg-white/15 hover:bg-white/25 border border-white/30 text-white backdrop-blur-xl"
                       icon={Youtube}
                       onClick={() => window.open(youtubeUrl, "_blank")}
                     >
                       Open in YouTube
                     </Button>
-                  ) : null}
+                  )}
 
-                  {/* Spotify Button */}
-                  {platform?.toLowerCase() === "apify" && spotifyUrl ? (
+                  {platform?.toLowerCase() === "apify" && spotifyUrl && (
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="bg-white/20 hover:bg-white/30 border-white/30 text-white"
+                      className="bg-white/15 hover:bg-white/25 border border-white/30 text-white backdrop-blur-xl"
                       icon={Music}
                       onClick={() => window.open(spotifyUrl, "_blank")}
                     >
                       Open in Spotify
                     </Button>
-                  ) : null}
+                  )}
 
-                  {/* Launch Valuation Button */}
                   <Button
                     variant="primary"
                     size="sm"
-                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white shadow-lg border-0"
+                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white border-0"
                     icon={Rocket}
                     onClick={handleLaunchValuation}
                   >
@@ -333,7 +328,7 @@ useEffect(() => {
                   {genres.slice(0, 6).map((genre, i) => (
                     <Badge
                       key={i}
-                      className="bg-white/10 backdrop-blur-sm text-white border border-white/20"
+                      className="bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition-colors"
                       size="sm"
                     >
                       {genre}
@@ -342,7 +337,7 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* Social Links - Apify Specific */}
+              {/* Social Links */}
               {platform === "apify" && externalLinks?.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {externalLinks.map((link, i) => {
@@ -353,7 +348,7 @@ useEffect(() => {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-lg text-xs font-medium transition-all"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-sm font-semibold transition-all hover:scale-105"
                       >
                         <Icon size={16} />
                         <span className="capitalize">{link.label}</span>
@@ -368,64 +363,40 @@ useEffect(() => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4">
                   {platform === "apify" ? (
                     <>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">
-                          Total Streams
-                        </p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {stats.totalStreams}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Total Streams</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalStreams}</p>
                       </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">
-                          Avg Streams
-                        </p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {stats.averageStreams}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Avg Streams</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{stats.averageStreams}</p>
                       </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">Top Tracks</p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {topTracks?.length || 0}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Top Tracks</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{topTracks?.length || 0}</p>
                       </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">Albums</p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {albums?.length || 0}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Albums</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{albums?.length || 0}</p>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">
-                          Avg Popularity
-                        </p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {stats.averageTrackPopularity}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Avg Popularity</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{stats.averageTrackPopularity}</p>
                       </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">
-                          Total Albums
-                        </p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {stats.totalAlbums}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Total Albums</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalAlbums}</p>
                       </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">Top Tracks</p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {stats.totalTopTracks}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Top Tracks</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalTopTracks}</p>
                       </div>
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p className="text-white/70 text-xs mb-1">Related</p>
-                        <p className="text-xl sm:text-2xl font-bold">
-                          {stats.totalRelatedArtists}
-                        </p>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Related</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalRelatedArtists}</p>
                       </div>
                     </>
                   )}
@@ -436,31 +407,32 @@ useEffect(() => {
         </div>
       </Card>
 
-      {/* Biography - Apify Specific */}
+      {/* Biography */}
       {platform === "apify" && biography && (
-        <Card className="p-4 sm:p-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-            Biography
-          </h3>
-
-          {/* Bio with Read More */}
+        <Card className="p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 rounded-xl">
+              <Music size={24} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Biography</h3>
+          </div>
           <BioText text={biography} />
         </Card>
       )}
 
       {/* Tabbed Content */}
-      <Card className="p-4 sm:p-6">
-        <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+      <Card className="p-6 sm:p-8">
+        <div className="flex gap-2 mb-8 border-b-2 border-slate-200 dark:border-slate-700 overflow-x-auto pb-2">
           <button
             onClick={() => setActiveTab("tracks")}
-            className={`px-4 sm:px-6 py-3 font-semibold transition-all duration-200 border-b-2 whitespace-nowrap ${
+            className={`px-6 py-3 font-bold transition-all duration-300 border-b-2 whitespace-nowrap rounded-t-lg ${
               activeTab === "tracks"
-                ? "border-green-500 text-green-500"
-                : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 -mb-2"
+                : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
             }`}
           >
             <span className="flex items-center gap-2">
-              <Music size={18} />
+              <Music size={20} />
               <span className="hidden sm:inline">Top Tracks</span>
               <span className="sm:hidden">Tracks</span>
             </span>
@@ -469,14 +441,14 @@ useEffect(() => {
           {platform !== "apify" && (
             <button
               onClick={() => setActiveTab("related")}
-              className={`px-4 sm:px-6 py-3 font-semibold transition-all duration-200 border-b-2 whitespace-nowrap ${
+              className={`px-6 py-3 font-bold transition-all duration-300 border-b-2 whitespace-nowrap rounded-t-lg ${
                 activeTab === "related"
-                  ? "border-green-500 text-green-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 -mb-2"
+                  : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
               }`}
             >
               <span className="flex items-center gap-2">
-                <Users size={18} />
+                <Users size={20} />
                 <span className="hidden sm:inline">Related Artists</span>
                 <span className="sm:hidden">Related</span>
               </span>
@@ -485,14 +457,14 @@ useEffect(() => {
 
           <button
             onClick={() => setActiveTab("albums")}
-            className={`px-4 sm:px-6 py-3 font-semibold transition-all duration-200 border-b-2 whitespace-nowrap ${
+            className={`px-6 py-3 font-bold transition-all duration-300 border-b-2 whitespace-nowrap rounded-t-lg ${
               activeTab === "albums"
-                ? "border-green-500 text-green-500"
-                : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 -mb-2"
+                : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
             }`}
           >
             <span className="flex items-center gap-2">
-              <Album size={18} />
+              <Album size={20} />
               Albums
             </span>
           </button>
@@ -500,14 +472,14 @@ useEffect(() => {
           {platform === "apify" && topCities?.length > 0 && (
             <button
               onClick={() => setActiveTab("cities")}
-              className={`px-4 sm:px-6 py-3 font-semibold transition-all duration-200 border-b-2 whitespace-nowrap ${
+              className={`px-6 py-3 font-bold transition-all duration-300 border-b-2 whitespace-nowrap rounded-t-lg ${
                 activeTab === "cities"
-                  ? "border-green-500 text-green-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 -mb-2"
+                  : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
               }`}
             >
               <span className="flex items-center gap-2">
-                <MapPin size={18} />
+                <MapPin size={20} />
                 <span className="hidden sm:inline">Top Cities</span>
                 <span className="sm:hidden">Cities</span>
               </span>
@@ -522,10 +494,10 @@ useEffect(() => {
               {topTracks.map((track, idx) => (
                 <div
                   key={track.id || idx}
-                  className="group flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-200"
+                  className="group flex items-center gap-4 p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:shadow-lg"
                 >
-                  <div className="flex-shrink-0 w-6 sm:w-8 text-center">
-                    <span className="text-lg sm:text-2xl font-bold text-gray-400 dark:text-gray-600">
+                  <div className="flex-shrink-0 w-10 text-center">
+                    <span className="text-2xl font-bold text-slate-400 dark:text-slate-600 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                       {track.rank || idx + 1}
                     </span>
                   </div>
@@ -534,7 +506,7 @@ useEffect(() => {
                     <img
                       src={track.albumImage}
                       alt={track.album}
-                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover shadow-md"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shadow-md ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-emerald-500/50 transition-all"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
@@ -544,55 +516,39 @@ useEffect(() => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">
+                        <h4 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                           {track.title}
                           {track.explicit && (
-                            <Badge
-                              className="ml-2 bg-gray-700 text-white"
-                              size="sm"
-                            >
+                            <Badge className="ml-2 bg-slate-700 text-white" size="sm">
                               E
                             </Badge>
                           )}
                         </h4>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                          {track.album && (
-                            <span className="truncate">{track.album}</span>
-                          )}
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-600 dark:text-slate-400">
+                          {track.album && <span className="truncate font-medium">{track.album}</span>}
                           {track.releaseYear && (
                             <span className="flex items-center gap-1">
-                              <Calendar
-                                size={12}
-                                className="hidden sm:inline"
-                              />
+                              <Calendar size={14} />
                               {track.releaseYear}
                             </span>
                           )}
-                          {track.durationFormatted && (
-                            <span className="hidden sm:inline">
-                              {track.durationFormatted}
-                            </span>
-                          )}
+                          {track.durationFormatted && <span>{track.durationFormatted}</span>}
                         </div>
                       </div>
 
-                      {/* Show stream count for Apify, popularity for others */}
                       {platform === "apify" && track.streamCountFormatted ? (
-                        <Badge
-                          className="flex-shrink-0 bg-blue-500 text-white"
-                          size="sm"
-                        >
-                          <Eye size={12} className="mr-1 opacity-90" />
+                        <Badge className="flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white" size="sm">
+                          <Play size={12} className="mr-1" />
                           {track.streamCountFormatted}
                         </Badge>
                       ) : (
                         <Badge
                           className={`flex-shrink-0 ${
                             track.popularity >= 80
-                              ? "bg-green-500"
+                              ? "bg-gradient-to-r from-emerald-500 to-green-600"
                               : track.popularity >= 60
-                                ? "bg-yellow-500"
-                                : "bg-gray-500"
+                                ? "bg-gradient-to-r from-yellow-500 to-orange-500"
+                                : "bg-gradient-to-r from-slate-500 to-slate-600"
                           } text-white`}
                           size="sm"
                         >
@@ -605,7 +561,7 @@ useEffect(() => {
                       <div className="mt-3">
                         <audio
                           controls
-                          className="w-full h-8 rounded"
+                          className="w-full h-10 rounded-lg"
                           style={{ maxWidth: "400px" }}
                         >
                           <source src={track.previewUrl} type="audio/mpeg" />
@@ -618,13 +574,13 @@ useEffect(() => {
                         href={track.youtubeUrl || track.spotifyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-1 mt-2 text-xs sm:text-sm ${
+                        className={`inline-flex items-center gap-1 mt-3 text-sm font-semibold ${
                           platform === "youtube"
                             ? "text-red-600 hover:text-red-700 dark:text-red-400"
                             : platform === "apify"
-                              ? "text-blue-600 hover:text-blue-700 dark:text-blue-400"
-                              : "text-green-600 hover:text-green-700 dark:text-green-400"
-                        }`}
+                              ? "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                              : "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                        } transition-colors`}
                       >
                         <ExternalLink size={14} />
                         Open in {platform === "youtube" ? "YouTube" : "Spotify"}
@@ -642,41 +598,42 @@ useEffect(() => {
               {relatedArtists.map((artist, i) => (
                 <div
                   key={artist.id || i}
-                  className="group p-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+                  className="group p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 dark:hover:border-emerald-500/50"
                 >
-                  <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="flex flex-col items-center text-center space-y-4">
                     {artist.image ? (
-                      <img
-                        src={artist.image}
-                        alt={artist.name}
-                        className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover shadow-lg ring-2 ring-gray-200 dark:ring-gray-700"
-                      />
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-full blur-lg opacity-0 group-hover:opacity-50 transition-opacity" />
+                        <img
+                          src={artist.image}
+                          alt={artist.name}
+                          className="relative w-32 h-32 rounded-full object-cover shadow-lg ring-4 ring-slate-200 dark:ring-slate-700 group-hover:ring-emerald-500/50 transition-all"
+                        />
+                      </div>
                     ) : (
-                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center">
-                        <Music size={32} className="text-white" />
+                      <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center shadow-lg">
+                        <Music size={40} className="text-white" />
                       </div>
                     )}
 
                     <div className="w-full">
-                      <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white mb-2 line-clamp-2">
+                      <h4 className="font-bold text-base text-slate-900 dark:text-white mb-3 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                         {artist.name}
                       </h4>
 
-                      <div className="space-y-2 text-xs sm:text-sm">
-                        <div className="flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400">
-                          <Users size={14} />
-                          <span>
-                            {artist.followersFormatted || artist.followers}
-                          </span>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
+                          <Users size={16} />
+                          <span className="font-semibold">{artist.followersFormatted || artist.followers}</span>
                         </div>
                         <Badge
                           size="sm"
                           className={`${
                             artist.popularity >= 80
-                              ? "bg-green-500"
+                              ? "bg-gradient-to-r from-emerald-500 to-green-600"
                               : artist.popularity >= 60
-                                ? "bg-yellow-500"
-                                : "bg-gray-500"
+                                ? "bg-gradient-to-r from-yellow-500 to-orange-500"
+                                : "bg-gradient-to-r from-slate-500 to-slate-600"
                           } text-white`}
                         >
                           {artist.popularityFormatted || artist.popularity}
@@ -684,12 +641,12 @@ useEffect(() => {
                       </div>
 
                       {artist.genres?.length > 0 && (
-                        <div className="flex flex-wrap justify-center gap-1 mt-2">
+                        <div className="flex flex-wrap justify-center gap-1 mt-3">
                           {artist.genres.slice(0, 2).map((genre, idx) => (
                             <Badge
                               key={idx}
                               size="sm"
-                              className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                              className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                             >
                               {genre}
                             </Badge>
@@ -702,7 +659,7 @@ useEffect(() => {
                           href={artist.spotifyUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 mt-3 text-xs sm:text-sm text-green-600 hover:text-green-700 dark:text-green-400"
+                          className="inline-flex items-center gap-1 mt-4 text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors"
                         >
                           <ExternalLink size={14} />
                           View Profile
@@ -716,59 +673,50 @@ useEffect(() => {
           )}
 
           {/* Albums Tab */}
-
-          {/* Albums Tab */}
           {activeTab === "albums" && enhancedAlbums?.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {enhancedAlbums.map((album, i) => (
                 <div
                   key={album.id || i}
-                  className="group bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+                  className="group bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 dark:hover:border-emerald-500/50"
                 >
                   {album.image ? (
-                    <img
-                      src={album.image}
-                      alt={album.name}
-                      className="w-full aspect-square rounded-lg object-cover shadow-md mb-3"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        e.currentTarget.nextElementSibling?.style.setProperty(
-                          "display",
-                          "flex",
-                        );
-                      }}
-                    />
+                    <div className="relative mb-4">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity" />
+                      <img
+                        src={album.image}
+                        alt={album.name}
+                        className="relative w-full aspect-square rounded-xl object-cover shadow-md ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-emerald-500/50 transition-all"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.nextElementSibling?.style.setProperty("display", "flex");
+                        }}
+                      />
+                    </div>
                   ) : null}
 
                   <div
-                    className="w-full aspect-square rounded-lg bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center mb-3"
+                    className="w-full aspect-square rounded-xl bg-gradient-to-br from-slate-300 to-slate-400 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center mb-4 shadow-md"
                     style={{ display: album.image ? "none" : "flex" }}
                   >
-                    <Album
-                      size={40}
-                      className="text-gray-500 dark:text-gray-600"
-                    />
+                    <Album size={48} className="text-slate-500 dark:text-slate-600" />
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-xs sm:text-sm text-gray-900 dark:text-white mb-1 line-clamp-2">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                       {album.name}
                     </h4>
-                    <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
-                      <span>{album.releaseYear}</span>
+                    <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-2">
+                      <span className="font-semibold">{album.releaseYear}</span>
                       {album.type && (
-                        <Badge
-                          size="sm"
-                          className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs"
-                        >
+                        <Badge size="sm" className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs">
                           {album.type}
                         </Badge>
                       )}
                     </div>
                     {album.totalTracks && (
-                      <p className="text-xs text-gray-500">
-                        {album.totalTracks} track
-                        {album.totalTracks !== 1 ? "s" : ""}
+                      <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">
+                        {album.totalTracks} track{album.totalTracks !== 1 ? "s" : ""}
                       </p>
                     )}
 
@@ -777,7 +725,7 @@ useEffect(() => {
                         href={album.spotifyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-2 text-xs text-green-600 hover:text-green-700 dark:text-green-400"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors"
                       >
                         <ExternalLink size={12} />
                         Open
@@ -789,69 +737,75 @@ useEffect(() => {
             </div>
           )}
 
-          {/* Top Cities Tab - Apify Specific */}
-          {activeTab === "cities" &&
-            platform === "apify" &&
-            topCities?.length > 0 && (
-              <div className="space-y-3">
-                {topCities.map((city, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl font-bold text-gray-400 dark:text-gray-600">
-                        {idx + 1}
-                      </span>
-                      <MapPin size={20} className="text-blue-500" />
-                      <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                          {city.city}
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {city.country}
-                        </p>
-                      </div>
+          {/* Top Cities Tab - WITHOUT EYE ICON */}
+          {activeTab === "cities" && platform === "apify" && topCities?.length > 0 && (
+            <div className="space-y-3">
+              {topCities.map((city, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:shadow-lg group"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-2xl font-bold text-slate-400 dark:text-slate-600 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors w-10 text-center">
+                      {idx + 1}
+                    </span>
+                    <div className="p-3 bg-gradient-to-br from-blue-500/20 to-emerald-500/20 rounded-xl">
+                      <MapPin size={24} className="text-blue-600 dark:text-blue-400" />
                     </div>
-                    <Badge className="bg-blue-500 text-white">
-                      <Eye size={12} className="mr-1" />
-                      {city.listenersFormatted}
-                    </Badge>
+                    <div>
+                      <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                        {city.city}
+                      </h4>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                        {city.country}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold">
+                    {city.listenersFormatted}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Empty States */}
           {activeTab === "tracks" && (!topTracks || topTracks.length === 0) && (
-            <div className="text-center py-12">
-              <Music size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <div className="text-center py-16">
+              <div className="inline-flex p-6 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                <Music size={56} className="text-slate-400" />
+              </div>
+              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">
                 No top tracks available
               </p>
             </div>
           )}
-          {activeTab === "related" &&
-            (!relatedArtists || relatedArtists.length === 0) && (
-              <div className="text-center py-12">
-                <Users size={48} className="mx-auto text-gray-400 mb-4" />
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                  No related artists found
-                </p>
+          {activeTab === "related" && (!relatedArtists || relatedArtists.length === 0) && (
+            <div className="text-center py-16">
+              <div className="inline-flex p-6 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                <Users size={56} className="text-slate-400" />
               </div>
-            )}
+              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">
+                No related artists found
+              </p>
+            </div>
+          )}
           {activeTab === "albums" && (!albums || albums.length === 0) && (
-            <div className="text-center py-12">
-              <Album size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <div className="text-center py-16">
+              <div className="inline-flex p-6 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                <Album size={56} className="text-slate-400" />
+              </div>
+              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">
                 No albums available
               </p>
             </div>
           )}
           {activeTab === "cities" && (!topCities || topCities.length === 0) && (
-            <div className="text-center py-12">
-              <MapPin size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            <div className="text-center py-16">
+              <div className="inline-flex p-6 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                <MapPin size={56} className="text-slate-400" />
+              </div>
+              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">
                 No city data available
               </p>
             </div>
@@ -861,4 +815,5 @@ useEffect(() => {
     </div>
   );
 };
+
 export default ArtistCard;

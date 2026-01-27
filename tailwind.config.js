@@ -4,7 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
+  darkMode: 'class', // enable dark mode using .dark class on <html>
   theme: {
     extend: {
       colors: {
@@ -14,7 +14,7 @@ export default {
           200: '#bbf7d0',
           300: '#86efac',
           400: '#4ade80',
-          500: '#10b981', // Emerald-500 - Modern green
+          500: '#10b981',
           600: '#059669',
           700: '#047857',
           800: '#065f46',
@@ -62,6 +62,19 @@ export default {
         'soft': '0 2px 8px rgba(0, 0, 0, 0.08)',
         'medium': '0 4px 16px rgba(0, 0, 0, 0.12)',
         'strong': '0 8px 24px rgba(0, 0, 0, 0.16)',
+        'soft-dark': '0 2px 8px rgba(255, 255, 255, 0.08)',
+        'medium-dark': '0 4px 16px rgba(255, 255, 255, 0.12)',
+        'strong-dark': '0 8px 24px rgba(255, 255, 255, 0.16)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'spin': 'spin 1s linear infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
     },
   },
