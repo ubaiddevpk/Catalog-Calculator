@@ -25,11 +25,11 @@ const ArtistValuationDetail = () => {
 
   // Region payout rate table (as per client spec document)
   const RATE_BY_REGION = {
-    "US_CA_UK_AU": 0.0042,
-    "EU_WEST": 0.0036,
-    "LATAM": 0.0018,
-    "ASIA": 0.0022,
-    "ROW": 0.0016
+    US_CA_UK_AU: 0.0042,
+    EU_WEST: 0.0036,
+    LATAM: 0.0018,
+    ASIA: 0.0022,
+    ROW: 0.0016,
   };
 
   const DEFAULT_SPOTIFY_RATE = 0.0035;
@@ -51,55 +51,78 @@ const ArtistValuationDetail = () => {
   };
 
   // Map cities to regions for geo-weighting
-const getCityRegion = (city) => {
-  if (!city || typeof city !== "string") return "ROW"; // default region
+  const getCityRegion = (city) => {
+    if (!city || typeof city !== "string") return "ROW"; // default region
 
-  const cityLower = city.toLowerCase();
+    const cityLower = city.toLowerCase();
 
-  if (cityLower.includes('united states') || cityLower.includes('usa') || 
-      cityLower.includes('canada') || cityLower.includes('united kingdom') || 
-      cityLower.includes('london') || cityLower.includes('australia') ||
-      cityLower.includes('new york') || cityLower.includes('los angeles') ||
-      cityLower.includes('toronto') || cityLower.includes('sydney')) {
-    return 'US_CA_UK_AU';
-  }
+    if (
+      cityLower.includes("united states") ||
+      cityLower.includes("usa") ||
+      cityLower.includes("canada") ||
+      cityLower.includes("united kingdom") ||
+      cityLower.includes("london") ||
+      cityLower.includes("australia") ||
+      cityLower.includes("new york") ||
+      cityLower.includes("los angeles") ||
+      cityLower.includes("toronto") ||
+      cityLower.includes("sydney")
+    ) {
+      return "US_CA_UK_AU";
+    }
 
-  if (cityLower.includes('germany') || cityLower.includes('france') || 
-      cityLower.includes('spain') || cityLower.includes('italy') ||
-      cityLower.includes('netherlands') || cityLower.includes('berlin') ||
-      cityLower.includes('paris') || cityLower.includes('madrid')) {
-    return 'EU_WEST';
-  }
+    if (
+      cityLower.includes("germany") ||
+      cityLower.includes("france") ||
+      cityLower.includes("spain") ||
+      cityLower.includes("italy") ||
+      cityLower.includes("netherlands") ||
+      cityLower.includes("berlin") ||
+      cityLower.includes("paris") ||
+      cityLower.includes("madrid")
+    ) {
+      return "EU_WEST";
+    }
 
-  if (cityLower.includes('mexico') || cityLower.includes('brazil') || 
-      cityLower.includes('argentina') || cityLower.includes('colombia') ||
-      cityLower.includes('lagos') || cityLower.includes('santiago')) {
-    return 'LATAM';
-  }
+    if (
+      cityLower.includes("mexico") ||
+      cityLower.includes("brazil") ||
+      cityLower.includes("argentina") ||
+      cityLower.includes("colombia") ||
+      cityLower.includes("lagos") ||
+      cityLower.includes("santiago")
+    ) {
+      return "LATAM";
+    }
 
-  if (cityLower.includes('india') || cityLower.includes('china') || 
-      cityLower.includes('japan') || cityLower.includes('korea') ||
-      cityLower.includes('mumbai') || cityLower.includes('tokyo') ||
-      cityLower.includes('seoul') || cityLower.includes('bangkok')) {
-    return 'ASIA';
-  }
+    if (
+      cityLower.includes("india") ||
+      cityLower.includes("china") ||
+      cityLower.includes("japan") ||
+      cityLower.includes("korea") ||
+      cityLower.includes("mumbai") ||
+      cityLower.includes("tokyo") ||
+      cityLower.includes("seoul") ||
+      cityLower.includes("bangkok")
+    ) {
+      return "ASIA";
+    }
 
-  return 'ROW';
-};
-
+    return "ROW";
+  };
 
   // Calculate geo-weighted effective Spotify rate
   const calculateGeoWeightedRate = (topCities) => {
     if (!topCities || topCities.length === 0) {
       return {
         rate: DEFAULT_SPOTIFY_RATE,
-        method: "DEFAULT"
+        method: "DEFAULT",
       };
     }
 
     // Count occurrences of each region from top cities
     const regionCounts = {};
-    topCities.forEach(city => {
+    topCities.forEach((city) => {
       const region = getCityRegion(city);
       regionCounts[region] = (regionCounts[region] || 0) + 1;
     });
@@ -107,20 +130,20 @@ const getCityRegion = (city) => {
     // Calculate shares (normalize to sum to 1.0)
     const totalCities = topCities.length;
     const regionShares = {};
-    Object.keys(regionCounts).forEach(region => {
+    Object.keys(regionCounts).forEach((region) => {
       regionShares[region] = regionCounts[region] / totalCities;
     });
 
     // Calculate weighted rate
     let effectiveRate = 0;
-    Object.keys(regionShares).forEach(region => {
+    Object.keys(regionShares).forEach((region) => {
       effectiveRate += regionShares[region] * RATE_BY_REGION[region];
     });
 
     return {
       rate: effectiveRate,
       method: "WEIGHTED",
-      breakdown: regionShares
+      breakdown: regionShares,
     };
   };
 
@@ -179,14 +202,15 @@ const getCityRegion = (city) => {
     }
 
     const releaseDates = artistData.topTracks
-      .filter(track => track.releaseDate)
-      .map(track => new Date(track.releaseDate).getTime());
+      .filter((track) => track.releaseDate)
+      .map((track) => new Date(track.releaseDate).getTime());
 
     if (releaseDates.length === 0) {
       return "2022-01-01"; // fallback
     }
 
-    const avgTimestamp = releaseDates.reduce((a, b) => a + b, 0) / releaseDates.length;
+    const avgTimestamp =
+      releaseDates.reduce((a, b) => a + b, 0) / releaseDates.length;
     const avgDate = new Date(avgTimestamp);
     return avgDate.toISOString().split("T")[0];
   };
@@ -286,7 +310,10 @@ const getCityRegion = (city) => {
         monthsLive: monthsLive,
         monthlyStreamsEst: monthlyStreamsEst,
         methodUsed: methodUsed,
-        decayFactor: methodUsed === "LIFETIME_RUNRATE_ADJ" ? getDecayFactor(monthsLive) : null,
+        decayFactor:
+          methodUsed === "LIFETIME_RUNRATE_ADJ"
+            ? getDecayFactor(monthsLive)
+            : null,
         effectiveSpotifyRate: effectiveSpotifyRate,
         geoMethodUsed: geoMethodUsed,
         geoBreakdown: geoRateData.breakdown,
@@ -419,6 +446,9 @@ const getCityRegion = (city) => {
                         <h3 className="text-xl font-bold text-emerald-400">
                           {formatCurrency(marketValuation)}
                         </h3>
+                        <p className="text-xs text-white/50 font-mono mt-1">
+                          ${formatNumber(marketValuation)}
+                        </p>
                         <p className="text-xs text-emerald-400">8x Multiple</p>
                       </div>
                     </div>
@@ -436,6 +466,9 @@ const getCityRegion = (city) => {
                         <h3 className="text-xl font-bold text-white">
                           {formatToMillions(monthlyStreamsEst)}
                         </h3>
+                        <p className="text-xs text-white/50 font-mono mt-1">
+                          {formatNumber(monthlyStreamsEst)}
+                        </p>
                         <p className="text-xs text-white/70">Streams</p>
                       </div>
                     </div>
@@ -453,6 +486,9 @@ const getCityRegion = (city) => {
                         <h3 className="text-xl font-bold text-white">
                           {formatCurrency(ltmSpotifyRevenue)}
                         </h3>
+                        <p className="text-xs text-white/50 font-mono mt-1">
+                          ${formatNumber(ltmSpotifyRevenue)}
+                        </p>
                         <p className="text-xs text-blue-400">12 Months</p>
                       </div>
                     </div>
@@ -501,12 +537,11 @@ const getCityRegion = (city) => {
               <div>
                 {/* //use icon also like  you did in other inputs */}
 
-
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                   <TrendingUp size={18} />
                   Lifetime Streams
                 </label>
-                
+
                 <input
                   type="text"
                   value={formatNumber(
@@ -523,7 +558,7 @@ const getCityRegion = (city) => {
               </div>
 
               <div>
-               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                   <Calendar size={18} />
                   Average Release Date
                 </label>
@@ -533,7 +568,6 @@ const getCityRegion = (city) => {
                     <Calendar size={20} />
                   </div>
 
-
                   <DatePicker
                     placeholderText="YYYY-MM-DD"
                     value={new Date(releaseDate)}
@@ -541,15 +575,12 @@ const getCityRegion = (city) => {
                     withFullScreenPortal
                     portalContainer={document.body}
                     portalId="date-picker-portal"
-                  
                     isDisabled
                     isOutsideRange={() => false}
                     shouldCloseOnSelect
                     open
                     openToDate={new Date(releaseDate)}
                     openToYearSelection
-                    
-
                     selected={new Date(releaseDate)}
                     onChange={(date) =>
                       setReleaseDate(date.toISOString().split("T")[0])
@@ -570,7 +601,7 @@ const getCityRegion = (city) => {
                   />
 
                   <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                    <Calendar size={20} />  
+                    <Calendar size={20} />
                   </div>
                 </div>
               </div>
@@ -585,8 +616,10 @@ const getCityRegion = (city) => {
                 <div className="text-sm text-blue-700 dark:text-blue-400">
                   <strong className="font-bold">Calculation Method:</strong>{" "}
                   {methodUsed === "RECENT_30D" && "Recent 30-day streams"}
-                  {methodUsed === "RECENT_28D_NORMALIZED" && "Recent 28-day streams (normalized to 30 days)"}
-                  {methodUsed === "LIFETIME_RUNRATE_ADJ" && `Lifetime Streams with Age Decay (${(getDecayFactor(monthsLive) * 100).toFixed(0)}% decay factor applied, ${monthsLive} months old)`}
+                  {methodUsed === "RECENT_28D_NORMALIZED" &&
+                    "Recent 28-day streams (normalized to 30 days)"}
+                  {methodUsed === "LIFETIME_RUNRATE_ADJ" &&
+                    `Lifetime Streams with Age Decay (${(getDecayFactor(monthsLive) * 100).toFixed(0)}% decay factor applied, ${monthsLive} months old)`}
                 </div>
               </div>
             </div>
@@ -608,7 +641,9 @@ const getCityRegion = (city) => {
                   Payout Rate
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {geoMethodUsed === "WEIGHTED" ? "Geo-weighted Spotify payout rate" : "Global average Spotify payout rate"}
+                  {geoMethodUsed === "WEIGHTED"
+                    ? "Geo-weighted Spotify payout rate"
+                    : "Global average Spotify payout rate"}
                 </p>
               </div>
             </div>
@@ -623,20 +658,29 @@ const getCityRegion = (city) => {
                 </span>
               </div>
               <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                {geoMethodUsed === "WEIGHTED" 
-                  ? "Rate calculated based on geographic distribution of listeners" 
+                {geoMethodUsed === "WEIGHTED"
+                  ? "Rate calculated based on geographic distribution of listeners"
                   : "Global average rate applied to all calculations"}
               </p>
-              
+
               {geoMethodUsed === "WEIGHTED" && geoRateData.breakdown && (
                 <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-500/30">
-                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2">Geographic Breakdown:</p>
+                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2">
+                    Geographic Breakdown:
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(geoRateData.breakdown).map(([region, share]) => (
-                      <div key={region} className="text-xs text-emerald-600 dark:text-emerald-400">
-                        <span className="font-semibold">{region}:</span> {(share * 100).toFixed(0)}% (${RATE_BY_REGION[region]?.toFixed(4)})
-                      </div>
-                    ))}
+                    {Object.entries(geoRateData.breakdown).map(
+                      ([region, share]) => (
+                        <div
+                          key={region}
+                          className="text-xs text-emerald-600 dark:text-emerald-400"
+                        >
+                          <span className="font-semibold">{region}:</span>{" "}
+                          {(share * 100).toFixed(0)}% ($
+                          {RATE_BY_REGION[region]?.toFixed(4)})
+                        </div>
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -670,9 +714,12 @@ const getCityRegion = (city) => {
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {methodUsed === "RECENT_30D" && "Based on recent 30-day streams"}
-                  {methodUsed === "RECENT_28D_NORMALIZED" && "Based on recent 28-day streams"}
-                  {methodUsed === "LIFETIME_RUNRATE_ADJ" && "Lifetime Streams with Age Decay"}
+                  {methodUsed === "RECENT_30D" &&
+                    "Based on recent 30-day streams"}
+                  {methodUsed === "RECENT_28D_NORMALIZED" &&
+                    "Based on recent 28-day streams"}
+                  {methodUsed === "LIFETIME_RUNRATE_ADJ" &&
+                    "Lifetime Streams with Age Decay"}
                 </p>
               </div>
 
@@ -686,7 +733,10 @@ const getCityRegion = (city) => {
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {geoMethodUsed === "WEIGHTED" ? "Geo-weighted" : "Global average"} Spotify payout rate
+                  {geoMethodUsed === "WEIGHTED"
+                    ? "Geo-weighted"
+                    : "Global average"}{" "}
+                  Spotify payout rate
                 </p>
               </div>
 
@@ -798,22 +848,28 @@ const getCityRegion = (city) => {
               </h3>
               <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-2 list-disc list-inside">
                 <li>
-                  Monthly streams calculated using priority: (1) Recent 30-day data, (2) Recent 28-day data normalized, (3) Lifetime history with age-based decay factors
+                  Monthly streams calculated using priority: (1) Recent 30-day
+                  data, (2) Recent 28-day data normalized, (3) Lifetime history
+                  with age-based decay factors
                 </li>
                 <li>
-                  Geo-weighted Spotify payout rates applied based on listener geographic distribution
+                  Geo-weighted Spotify payout rates applied based on listener
+                  geographic distribution
                 </li>
                 <li>
-                  LTM (Last Twelve Months) revenue = monthly streams × geo-weighted payout rate × 12
+                  LTM (Last Twelve Months) revenue = monthly streams ×
+                  geo-weighted payout rate × 12
                 </li>
                 <li>
                   Valuations calculated using revenue multiples (6x, 8x, 10x)
                 </li>
                 <li>
-                  Decay factors applied when using lifetime method: 0-3mo (100%), 4-12mo (85%), 13-36mo (65%), 36+mo (50%)
+                  Decay factors applied when using lifetime method: 0-3mo
+                  (100%), 4-12mo (85%), 13-36mo (65%), 36+mo (50%)
                 </li>
                 <li>
-                  Regional rates: US/CA/UK/AU ($0.0042), EU West ($0.0036), LATAM ($0.0018), Asia ($0.0022), Rest of World ($0.0016)
+                  Regional rates: US/CA/UK/AU ($0.0042), EU West ($0.0036),
+                  LATAM ($0.0018), Asia ($0.0022), Rest of World ($0.0016)
                 </li>
               </ul>
             </div>

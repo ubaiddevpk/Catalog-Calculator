@@ -43,7 +43,10 @@ const BioText = ({ text }) => {
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? "Show less" : "Read more"}
-        <ChevronRight size={14} className={`transition-transform ${expanded ? 'rotate-90' : ''}`} />
+        <ChevronRight
+          size={14}
+          className={`transition-transform ${expanded ? "rotate-90" : ""}`}
+        />
       </button>
     </div>
   );
@@ -66,7 +69,8 @@ const Button = ({
   size = "md",
   disabled,
 }) => {
-  const baseStyles = "inline-flex items-center gap-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl";
+  const baseStyles =
+    "inline-flex items-center gap-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl";
   const sizeStyles = {
     sm: "px-4 py-2 text-sm",
     md: "px-5 py-2.5 text-base",
@@ -184,7 +188,7 @@ const ArtistCard = ({
 
         const merged = albums.map((album) => {
           const spotifyData = spotifyImages.find(
-            (s) => s.albumName?.toLowerCase() === album.name?.toLowerCase()
+            (s) => s.albumName?.toLowerCase() === album.name?.toLowerCase(),
           );
           return {
             ...album,
@@ -210,7 +214,10 @@ const ArtistCard = ({
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-500/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div
+            className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-500/20 to-transparent rounded-full blur-3xl animate-pulse"
+            style={{ animationDelay: "1s" }}
+          />
         </div>
 
         <div className="relative z-10 p-6 sm:p-8 lg:p-10">
@@ -225,7 +232,8 @@ const ArtistCard = ({
                     alt={name}
                     className="relative w-40 h-40 sm:w-52 sm:h-52 lg:w-64 lg:h-64 rounded-3xl object-cover shadow-2xl ring-4 ring-white/30 group-hover:ring-white/50 transition-all"
                     onError={(e) => {
-                      e.currentTarget.src = "https://via.placeholder.com/256?text=No+Image";
+                      e.currentTarget.src =
+                        "https://via.placeholder.com/256?text=No+Image";
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-6">
@@ -254,7 +262,11 @@ const ArtistCard = ({
                       </span>
                     </Badge>
                     <span className="text-white/80 text-sm font-medium flex items-center gap-2">
-                      <Disc3 size={16} className="animate-spin" style={{ animationDuration: '3s' }} />
+                      <Disc3
+                        size={16}
+                        className="animate-spin"
+                        style={{ animationDuration: "3s" }}
+                      />
                       Real-time {currentPlatform.label} Stats
                     </span>
                   </div>
@@ -265,20 +277,26 @@ const ArtistCard = ({
                     <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
                       <Users size={20} />
                       <span className="font-bold">{followers}</span>
-                      <span className="text-white/70 hidden sm:inline text-sm">Followers</span>
+                      <span className="text-white/70 hidden sm:inline text-sm">
+                        Followers
+                      </span>
                     </div>
                     {monthlyListeners && platform === "apify" && (
                       <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
                         <Play size={20} />
                         <span className="font-bold">{monthlyListeners}</span>
-                        <span className="text-white/70 hidden sm:inline text-sm">Monthly Listeners</span>
+                        <span className="text-white/70 hidden sm:inline text-sm">
+                          Monthly Listeners
+                        </span>
                       </div>
                     )}
                     {popularity && platform !== "apify" && (
                       <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl">
                         <TrendingUp size={20} />
                         <span className="font-bold">{popularity}</span>
-                        <span className="text-white/70 hidden sm:inline text-sm">Popularity</span>
+                        <span className="text-white/70 hidden sm:inline text-sm">
+                          Popularity
+                        </span>
                       </div>
                     )}
                   </div>
@@ -364,39 +382,71 @@ const ArtistCard = ({
                   {platform === "apify" ? (
                     <>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Total Streams</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalStreams}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Total Streams
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {stats.totalStreams}
+                        </p>
                       </div>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Avg Streams</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{stats.averageStreams}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Avg Streams
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {stats.averageStreams}
+                        </p>
                       </div>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Top Tracks</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{topTracks?.length || 0}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Top Tracks
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {topTracks?.length || 0}
+                        </p>
                       </div>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Albums</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{albums?.length || 0}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Albums
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {albums?.length || 0}
+                        </p>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Avg Popularity</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{stats.averageTrackPopularity}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Avg Popularity
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {stats.averageTrackPopularity}
+                        </p>
                       </div>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Total Albums</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalAlbums}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Total Albums
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {stats.totalAlbums}
+                        </p>
                       </div>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Top Tracks</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalTopTracks}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Top Tracks
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {stats.totalTopTracks}
+                        </p>
                       </div>
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/30 hover:bg-white/15 transition-colors">
-                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">Related</p>
-                        <p className="text-2xl sm:text-3xl font-bold">{stats.totalRelatedArtists}</p>
+                        <p className="text-white/70 text-xs font-semibold mb-1 uppercase tracking-wide">
+                          Related
+                        </p>
+                        <p className="text-2xl sm:text-3xl font-bold">
+                          {stats.totalRelatedArtists}
+                        </p>
                       </div>
                     </>
                   )}
@@ -412,9 +462,14 @@ const ArtistCard = ({
         <Card className="p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-blue-500/20 rounded-xl">
-              <Music size={24} className="text-emerald-600 dark:text-emerald-400" />
+              <Music
+                size={24}
+                className="text-emerald-600 dark:text-emerald-400"
+              />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Biography</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Biography
+            </h3>
           </div>
           <BioText text={biography} />
         </Card>
@@ -519,25 +574,37 @@ const ArtistCard = ({
                         <h4 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                           {track.title}
                           {track.explicit && (
-                            <Badge className="ml-2 bg-slate-700 text-white" size="sm">
+                            <Badge
+                              className="ml-2 bg-slate-700 text-white"
+                              size="sm"
+                            >
                               E
                             </Badge>
                           )}
                         </h4>
                         <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-600 dark:text-slate-400">
-                          {track.album && <span className="truncate font-medium">{track.album}</span>}
+                          {track.album && (
+                            <span className="truncate font-medium">
+                              {track.album}
+                            </span>
+                          )}
                           {track.releaseYear && (
                             <span className="flex items-center gap-1">
                               <Calendar size={14} />
                               {track.releaseYear}
                             </span>
                           )}
-                          {track.durationFormatted && <span>{track.durationFormatted}</span>}
+                          {track.durationFormatted && (
+                            <span>{track.durationFormatted}</span>
+                          )}
                         </div>
                       </div>
 
                       {platform === "apify" && track.streamCountFormatted ? (
-                        <Badge className="flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white" size="sm">
+                        <Badge
+                          className="flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+                          size="sm"
+                        >
                           <Play size={12} className="mr-1" />
                           {track.streamCountFormatted}
                         </Badge>
@@ -624,7 +691,9 @@ const ArtistCard = ({
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
                           <Users size={16} />
-                          <span className="font-semibold">{artist.followersFormatted || artist.followers}</span>
+                          <span className="font-semibold">
+                            {artist.followersFormatted || artist.followers}
+                          </span>
                         </div>
                         <Badge
                           size="sm"
@@ -689,34 +758,51 @@ const ArtistCard = ({
                         className="relative w-full aspect-square rounded-xl object-cover shadow-md ring-2 ring-slate-200 dark:ring-slate-700 group-hover:ring-emerald-500/50 transition-all"
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
-                          e.currentTarget.nextElementSibling?.style.setProperty("display", "flex");
+                          e.currentTarget.nextElementSibling?.style.setProperty(
+                            "display",
+                            "flex",
+                          );
                         }}
                       />
+                      <div
+                        className="w-full aspect-square rounded-xl bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 flex items-center justify-center shadow-md"
+                        style={{ display: "none" }}
+                      >
+                        <Disc3
+                          size={64}
+                          className="text-white drop-shadow-lg"
+                        />
+                      </div>
                     </div>
-                  ) : null}
-
-                  <div
-                    className="w-full aspect-square rounded-xl bg-gradient-to-br from-slate-300 to-slate-400 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center mb-4 shadow-md"
-                    style={{ display: album.image ? "none" : "flex" }}
-                  >
-                    <Album size={48} className="text-slate-500 dark:text-slate-600" />
-                  </div>
+                  ) : (
+                    <div className="w-full aspect-square rounded-xl bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-md">
+                      <Disc3 size={64} className="text-white drop-shadow-lg" />
+                    </div>
+                  )}
 
                   <div>
                     <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-2 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                       {album.name}
                     </h4>
                     <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-2">
-                      <span className="font-semibold">{album.releaseYear}</span>
+                      <span className="font-semibold flex items-center gap-1">
+                        <Calendar size={12} />
+                        {album.releaseYear}
+                      </span>
                       {album.type && (
-                        <Badge size="sm" className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs">
+                        <Badge
+                          size="sm"
+                          className="bg-gradient-to-r from-emerald-500 to-blue-500 text-white text-xs capitalize"
+                        >
                           {album.type}
                         </Badge>
                       )}
                     </div>
-                    {album.totalTracks && (
-                      <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">
-                        {album.totalTracks} track{album.totalTracks !== 1 ? "s" : ""}
+                    {album.totalTracks > 0 && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-1">
+                        <Music size={12} />
+                        {album.totalTracks} track
+                        {album.totalTracks !== 1 ? "s" : ""}
                       </p>
                     )}
 
@@ -725,10 +811,10 @@ const ArtistCard = ({
                         href={album.spotifyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 transition-colors group-hover:underline"
                       >
                         <ExternalLink size={12} />
-                        Open
+                        Open in Spotify
                       </a>
                     )}
                   </div>
@@ -737,37 +823,42 @@ const ArtistCard = ({
             </div>
           )}
 
-          {/* Top Cities Tab - WITHOUT EYE ICON */}
-          {activeTab === "cities" && platform === "apify" && topCities?.length > 0 && (
-            <div className="space-y-3">
-              {topCities.map((city, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:shadow-lg group"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-bold text-slate-400 dark:text-slate-600 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors w-10 text-center">
-                      {idx + 1}
-                    </span>
-                    <div className="p-3 bg-gradient-to-br from-blue-500/20 to-emerald-500/20 rounded-xl">
-                      <MapPin size={24} className="text-blue-600 dark:text-blue-400" />
+          {activeTab === "cities" &&
+            platform === "apify" &&
+            topCities?.length > 0 && (
+              <div className="space-y-3">
+                {topCities.map((city, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 hover:shadow-lg group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl font-bold text-slate-400 dark:text-slate-600 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors w-10 text-center">
+                        {idx + 1}
+                      </span>
+                      <div className="p-3 bg-gradient-to-br from-blue-500/20 to-emerald-500/20 rounded-xl">
+                        <MapPin
+                          size={24}
+                          className="text-blue-600 dark:text-blue-400"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                          {city.city}
+                        </h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                          {city.country}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-base text-slate-900 dark:text-white">
-                        {city.city}
-                      </h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                        {city.country}
-                      </p>
-                    </div>
+                    <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold">
+                      <Users size={14} className="mr-1" />
+                      {city.numberOfListeners.toLocaleString()}
+                    </Badge>
                   </div>
-                  <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold">
-                    {city.listenersFormatted}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
           {/* Empty States */}
           {activeTab === "tracks" && (!topTracks || topTracks.length === 0) && (
@@ -780,16 +871,17 @@ const ArtistCard = ({
               </p>
             </div>
           )}
-          {activeTab === "related" && (!relatedArtists || relatedArtists.length === 0) && (
-            <div className="text-center py-16">
-              <div className="inline-flex p-6 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
-                <Users size={56} className="text-slate-400" />
+          {activeTab === "related" &&
+            (!relatedArtists || relatedArtists.length === 0) && (
+              <div className="text-center py-16">
+                <div className="inline-flex p-6 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                  <Users size={56} className="text-slate-400" />
+                </div>
+                <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">
+                  No related artists found
+                </p>
               </div>
-              <p className="text-lg text-slate-600 dark:text-slate-400 font-medium">
-                No related artists found
-              </p>
-            </div>
-          )}
+            )}
           {activeTab === "albums" && (!albums || albums.length === 0) && (
             <div className="text-center py-16">
               <div className="inline-flex p-6 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
