@@ -23,6 +23,14 @@ const ArtistValuationDetail = () => {
   const navigate = useNavigate();
   const { selectedArtist: artistData } = useArtistStore();
 
+  // Region payout rate table (as per client spec document)
+  const RATE_BY_REGION = {
+    "US_CA_UK_AU": 0.0042,
+    "EU_WEST": 0.0036,
+    "LATAM": 0.0018,
+    "ASIA": 0.0022,
+    "ROW": 0.0016
+  };
 
   const DEFAULT_SPOTIFY_RATE = 0.0035;
 
@@ -40,6 +48,80 @@ const ArtistValuationDetail = () => {
       (current.getFullYear() - release.getFullYear()) * 12 +
       (current.getMonth() - release.getMonth());
     return Math.max(1, months);
+  };
+
+  // Map cities to regions for geo-weighting
+const getCityRegion = (city) => {
+  if (!city || typeof city !== "string") return "ROW"; // default region
+
+  const cityLower = city.toLowerCase();
+
+  if (cityLower.includes('united states') || cityLower.includes('usa') || 
+      cityLower.includes('canada') || cityLower.includes('united kingdom') || 
+      cityLower.includes('london') || cityLower.includes('australia') ||
+      cityLower.includes('new york') || cityLower.includes('los angeles') ||
+      cityLower.includes('toronto') || cityLower.includes('sydney')) {
+    return 'US_CA_UK_AU';
+  }
+
+  if (cityLower.includes('germany') || cityLower.includes('france') || 
+      cityLower.includes('spain') || cityLower.includes('italy') ||
+      cityLower.includes('netherlands') || cityLower.includes('berlin') ||
+      cityLower.includes('paris') || cityLower.includes('madrid')) {
+    return 'EU_WEST';
+  }
+
+  if (cityLower.includes('mexico') || cityLower.includes('brazil') || 
+      cityLower.includes('argentina') || cityLower.includes('colombia') ||
+      cityLower.includes('lagos') || cityLower.includes('santiago')) {
+    return 'LATAM';
+  }
+
+  if (cityLower.includes('india') || cityLower.includes('china') || 
+      cityLower.includes('japan') || cityLower.includes('korea') ||
+      cityLower.includes('mumbai') || cityLower.includes('tokyo') ||
+      cityLower.includes('seoul') || cityLower.includes('bangkok')) {
+    return 'ASIA';
+  }
+
+  return 'ROW';
+};
+
+
+  // Calculate geo-weighted effective Spotify rate
+  const calculateGeoWeightedRate = (topCities) => {
+    if (!topCities || topCities.length === 0) {
+      return {
+        rate: DEFAULT_SPOTIFY_RATE,
+        method: "DEFAULT"
+      };
+    }
+
+    // Count occurrences of each region from top cities
+    const regionCounts = {};
+    topCities.forEach(city => {
+      const region = getCityRegion(city);
+      regionCounts[region] = (regionCounts[region] || 0) + 1;
+    });
+
+    // Calculate shares (normalize to sum to 1.0)
+    const totalCities = topCities.length;
+    const regionShares = {};
+    Object.keys(regionCounts).forEach(region => {
+      regionShares[region] = regionCounts[region] / totalCities;
+    });
+
+    // Calculate weighted rate
+    let effectiveRate = 0;
+    Object.keys(regionShares).forEach(region => {
+      effectiveRate += regionShares[region] * RATE_BY_REGION[region];
+    });
+
+    return {
+      rate: effectiveRate,
+      method: "WEIGHTED",
+      breakdown: regionShares
+    };
   };
 
   const getLifetimeStreams = () => {
@@ -90,11 +172,30 @@ const ArtistValuationDetail = () => {
     return 0;
   };
 
+  // Get average release date from top tracks
+  const getAverageReleaseDate = () => {
+    if (!artistData?.topTracks || artistData.topTracks.length === 0) {
+      return "2022-01-01"; // fallback
+    }
+
+    const releaseDates = artistData.topTracks
+      .filter(track => track.releaseDate)
+      .map(track => new Date(track.releaseDate).getTime());
+
+    if (releaseDates.length === 0) {
+      return "2022-01-01"; // fallback
+    }
+
+    const avgTimestamp = releaseDates.reduce((a, b) => a + b, 0) / releaseDates.length;
+    const avgDate = new Date(avgTimestamp);
+    return avgDate.toISOString().split("T")[0];
+  };
+
   const initialLifetimeStreams = getLifetimeStreams();
   const [lifetimeStreamsInput, setLifetimeStreamsInput] = useState(
     initialLifetimeStreams.toString(),
   );
-  const [releaseDate, setReleaseDate] = useState("2022-01-01");
+  const [releaseDate, setReleaseDate] = useState(getAverageReleaseDate());
 
   useEffect(() => {
     if (!artistData) {
@@ -109,13 +210,32 @@ const ArtistValuationDetail = () => {
   const currentDate = new Date();
   const monthsLive = getMonthsBetween(releaseDate, currentDate);
 
-  const avgMonthly = monthsLive > 0 ? lifetimeStreams / monthsLive : 0;
-  const decayFactor = getDecayFactor(monthsLive);
-  const monthlyStreamsEst = Math.round(avgMonthly * decayFactor);
-  const methodUsed = "LIFETIME_RUNRATE_ADJ";
+  // Calculate monthly streams estimate with priority logic
+  let monthlyStreamsEst = 0;
+  let methodUsed = "";
 
-  const effectiveSpotifyRate = DEFAULT_SPOTIFY_RATE;
-  const geoMethodUsed = "GLOBAL_AVERAGE";
+  // Priority 1: Recent 30 days
+  if (artistData.streams_last_30_days) {
+    monthlyStreamsEst = artistData.streams_last_30_days;
+    methodUsed = "RECENT_30D";
+  }
+  // Priority 2: Recent 28 days (normalized to 30)
+  else if (artistData.streams_last_28_days) {
+    monthlyStreamsEst = Math.round(artistData.streams_last_28_days * (30 / 28));
+    methodUsed = "RECENT_28D_NORMALIZED";
+  }
+  // Priority 3: Lifetime with decay
+  else {
+    const avgMonthly = monthsLive > 0 ? lifetimeStreams / monthsLive : 0;
+    const decayFactor = getDecayFactor(monthsLive);
+    monthlyStreamsEst = Math.round(avgMonthly * decayFactor);
+    methodUsed = "LIFETIME_RUNRATE_ADJ";
+  }
+
+  // Calculate geo-weighted effective rate
+  const geoRateData = calculateGeoWeightedRate(artistData.topCities);
+  const effectiveSpotifyRate = geoRateData.rate;
+  const geoMethodUsed = geoRateData.method;
 
   const monthlySpotifyRevenue = monthlyStreamsEst * effectiveSpotifyRate;
   const ltmSpotifyRevenue = monthlySpotifyRevenue * 12;
@@ -166,9 +286,10 @@ const ArtistValuationDetail = () => {
         monthsLive: monthsLive,
         monthlyStreamsEst: monthlyStreamsEst,
         methodUsed: methodUsed,
-        decayFactor: decayFactor,
+        decayFactor: methodUsed === "LIFETIME_RUNRATE_ADJ" ? getDecayFactor(monthsLive) : null,
         effectiveSpotifyRate: effectiveSpotifyRate,
         geoMethodUsed: geoMethodUsed,
+        geoBreakdown: geoRateData.breakdown,
         monthlySpotifyRevenue: monthlySpotifyRevenue,
         ltmSpotifyRevenue: ltmSpotifyRevenue,
       },
@@ -216,7 +337,6 @@ const ArtistValuationDetail = () => {
               <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
                 Premium Feature
               </span>
-
             </div>
           </div>
         </div>
@@ -379,8 +499,11 @@ const ArtistValuationDetail = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
+                {/* //use icon also like  you did in other inputs */}
 
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
+
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                  <TrendingUp size={18} />
                   Lifetime Streams
                 </label>
                 
@@ -400,7 +523,7 @@ const ArtistValuationDetail = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                   <Calendar size={18} />
                   Average Release Date
                 </label>
@@ -445,6 +568,10 @@ const ArtistValuationDetail = () => {
                     className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
                     size={20}
                   />
+
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <Calendar size={20} />  
+                  </div>
                 </div>
               </div>
             </div>
@@ -457,16 +584,16 @@ const ArtistValuationDetail = () => {
                 />
                 <div className="text-sm text-blue-700 dark:text-blue-400">
                   <strong className="font-bold">Calculation Method:</strong>{" "}
-                  Lifetime Streams with Age Decay (
-                  {(decayFactor * 100).toFixed(0)}% decay factor applied,{" "}
-                  {monthsLive} months old)
+                  {methodUsed === "RECENT_30D" && "Recent 30-day streams"}
+                  {methodUsed === "RECENT_28D_NORMALIZED" && "Recent 28-day streams (normalized to 30 days)"}
+                  {methodUsed === "LIFETIME_RUNRATE_ADJ" && `Lifetime Streams with Age Decay (${(getDecayFactor(monthsLive) * 100).toFixed(0)}% decay factor applied, ${monthsLive} months old)`}
                 </div>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Payout Rate Card */}
+        {/* Payout Rate Card with Geo-Weighting */}
         <Card className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 shadow-xl">
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-6">
@@ -481,23 +608,38 @@ const ArtistValuationDetail = () => {
                   Payout Rate
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Global average Spotify payout rate
+                  {geoMethodUsed === "WEIGHTED" ? "Geo-weighted Spotify payout rate" : "Global average Spotify payout rate"}
                 </p>
               </div>
             </div>
 
             <div className="p-6 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-2 border-emerald-200 dark:border-emerald-500/30 rounded-xl">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <span className="text-base font-bold text-emerald-700 dark:text-emerald-400">
-                  Spotify Payout Rate:
+                  Effective Spotify Payout Rate:
                 </span>
                 <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                   ${effectiveSpotifyRate.toFixed(4)}
                 </span>
               </div>
-              <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-400">
-                Global average rate applied to all calculations
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                {geoMethodUsed === "WEIGHTED" 
+                  ? "Rate calculated based on geographic distribution of listeners" 
+                  : "Global average rate applied to all calculations"}
               </p>
+              
+              {geoMethodUsed === "WEIGHTED" && geoRateData.breakdown && (
+                <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-500/30">
+                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2">Geographic Breakdown:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(geoRateData.breakdown).map(([region, share]) => (
+                      <div key={region} className="text-xs text-emerald-600 dark:text-emerald-400">
+                        <span className="font-semibold">{region}:</span> {(share * 100).toFixed(0)}% (${RATE_BY_REGION[region]?.toFixed(4)})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -528,7 +670,9 @@ const ArtistValuationDetail = () => {
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Lifetime Streams with Age Decay
+                  {methodUsed === "RECENT_30D" && "Based on recent 30-day streams"}
+                  {methodUsed === "RECENT_28D_NORMALIZED" && "Based on recent 28-day streams"}
+                  {methodUsed === "LIFETIME_RUNRATE_ADJ" && "Lifetime Streams with Age Decay"}
                 </p>
               </div>
 
@@ -542,7 +686,7 @@ const ArtistValuationDetail = () => {
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Global average Spotify payout rate
+                  {geoMethodUsed === "WEIGHTED" ? "Geo-weighted" : "Global average"} Spotify payout rate
                 </p>
               </div>
 
@@ -654,27 +798,22 @@ const ArtistValuationDetail = () => {
               </h3>
               <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-2 list-disc list-inside">
                 <li>
-                  Monthly streams calculated from lifetime history with
-                  age-based decay factors
+                  Monthly streams calculated using priority: (1) Recent 30-day data, (2) Recent 28-day data normalized, (3) Lifetime history with age-based decay factors
                 </li>
                 <li>
-                  Global average Spotify payout rate applied to all calculations
+                  Geo-weighted Spotify payout rates applied based on listener geographic distribution
                 </li>
                 <li>
-                  LTM (Last Twelve Months) revenue = monthly streams × payout
-                  rate × 12
+                  LTM (Last Twelve Months) revenue = monthly streams × geo-weighted payout rate × 12
                 </li>
                 <li>
-                  Valuations calculated using client-defined revenue multiples
-                  (6x, 8x, 10x)
+                  Valuations calculated using revenue multiples (6x, 8x, 10x)
                 </li>
                 <li>
-                  Decay factors applied: 0-3mo (100%), 4-12mo (85%), 13-36mo
-                  (65%), 36+mo (50%)
+                  Decay factors applied when using lifetime method: 0-3mo (100%), 4-12mo (85%), 13-36mo (65%), 36+mo (50%)
                 </li>
                 <li>
-                  All figures are estimates based on available data and approved
-                  methodology
+                  Regional rates: US/CA/UK/AU ($0.0042), EU West ($0.0036), LATAM ($0.0018), Asia ($0.0022), Rest of World ($0.0016)
                 </li>
               </ul>
             </div>
